@@ -1,0 +1,23 @@
+\glsresetall
+
+\chapter{Background}
+
+\section{Physical Memory Protection}
+\label{cha:pmp}
+
+% \gls{pmp} is a RISC-V extension used for fault containment and to isolation of Machine mode by limiting memory access for lower privilage levels (User- and Supervisor-mode).
+\Gls{pmp} is a RISC-V extension that Machine mode uses to enforce fault containment and isolation by restricting physical memory access available to lower privilege levels (User- and Supervisor-mode).
+These restrictions are applied in a few, up to 64, \gls{pmp} entries.
+Each of these entries get two \glspl{csr}, one to define the addres range ($pmpaddr_i$) and one to define the permissions and addressing mode ($pmpcfg_i$).
+\\
+The pmpcfg looks like this:
+\begin{table}[h]
+\centering
+\begin{tabular}{cccccccc}
+7                       & 6          & 5         & 4          & 3         & 2                      & 1                      & 0                      \\ \hline
+\multicolumn{1}{|c|}{L} & \multicolumn{2}{c|}{0} & \multicolumn{2}{c|}{A} & \multicolumn{1}{c|}{X} & \multicolumn{1}{c|}{W} & \multicolumn{1}{c|}{R} \\ \hline
+\end{tabular}
+\caption{pmpcfg layout}
+\label{table:pmpcfg_layout}
+\cite{pmp_docs}
+\end{table}

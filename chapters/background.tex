@@ -1,23 +1,79 @@
 \glsresetall
 
+
 \chapter{Background}
 
-\section{Physical Memory Protection}
-\label{cha:pmp}
+\section{Physical Memory Protection}\label{cha:pmp}
 
-% \gls{pmp} is a RISC-V extension used for fault containment and to isolation of Machine mode by limiting memory access for lower privilage levels (User- and Supervisor-mode).
 \Gls{pmp} is a RISC-V extension that Machine mode uses to enforce fault containment and isolation by restricting physical memory access available to lower privilege levels (User- and Supervisor-mode).
 These restrictions are applied in a few, up to 64, \gls{pmp} entries.
 Each of these entries get two \glspl{csr}, one to define the addres range ($pmpaddr_i$) and one to define the permissions and addressing mode ($pmpcfg_i$).
 \\
-The pmpcfg looks like this:
+The $pmpcfg$ looks like this:
 \begin{table}[h]
 \centering
 \begin{tabular}{cccccccc}
 7                       & 6          & 5         & 4          & 3         & 2                      & 1                      & 0                      \\ \hline
 \multicolumn{1}{|c|}{L} & \multicolumn{2}{c|}{0} & \multicolumn{2}{c|}{A} & \multicolumn{1}{c|}{X} & \multicolumn{1}{c|}{W} & \multicolumn{1}{c|}{R} \\ \hline
 \end{tabular}
-\caption{pmpcfg layout}
+\caption{$pmpcfg$ layout}
 \label{table:pmpcfg_layout}
 \cite{pmp_docs}
 \end{table}
+
+In this table we see R, W and X, these are the bits used to indicate Read Write and eXecution permissions.
+When these bits are set, User- and Supervisor mode are granted the corresponding permissions for all addresses within the range defined in the $pmpaddr_i$ register.
+If an access violates these permissions an exception is raised.
+Note that the combination R=0 and W=1 is reserved and must thus not be used.
+
+`A' indicates the addressing mode, this indicates how the $pmpaddr$ is interpreted.
+Since the underlying project on which this thesis expands only implemented \gls{tor} mode, we restrict our focus to this addressing mode.
+\Gls{tor} mode interprets $pmpaddr_i$ as the end of the address range for this entry.
+The beginning of the range is defined using $pmpaddr_{i-1}$ (or 0 for \gls{pmp} entry 0).
+
+`L' is the lock bit, the lock bit is used to disable the modifing of an entry, this means that $pmpaddr$ and $pmpcfg$ for the corresponding entry cannot be modified.
+In \gls{tor} mode this also disallows modifing the $pmpaddr$ of the previous entry as this also defines the range of this entry.
+Additionally, when the `L' bit is set, the PMP permissions are enforced for Machine-mode accesses as well, not just User- and Supervisor-mode accesses.
+
+%TODO remove once smePMP chapter is done
+\section{Enhanced Physical Memory Protection}
+\Gls{pmp} is relatively permissive and more restrictions are wanted.
+To add more restrictions \gls{smepmp} was developed.
+This adds the possibility for Machine-mode only memory with restrictions and for User- and Supervisor- mode only memory.
+It also adds the possibility to disallow memory access when memory is not within a \gls{pmp} region including in Machine-mode.
+While \gls{pmp} effectively isolates User- and Supervisor-mode from Machine-mode, it assumes Machine-mode code is trustworthy.
+\Gls{smepmp} addresses this by adding restrictions for potentially buggy Machine-mode code~\cite{smePMP_apendix}.
+
+To be able to configure these added behaviors a few control bits need to be added: \gls{mml}, \gls{mmwp} and \gls{rlb}.
+These are added in the $mseccfg$ \gls{csr}.
+
+\Gls{mml} is the bit that allows the creation of restricted machine mode only memory and the creation of User-/Supervisor-mode only memory.
+When this bit is set, the L-bit in the $pmpcfg$ register gains extra functionality: a \textbf{locked} entry becomes Machine-mode only, while an entry that is \textbf{not locked} becomes User- and Supervisor-mode only.
+
+This approach does however have 2 more issues:
+\begin{enumerate}
+\item However, there are use cases requiring shared memory between User-/Supervisor- and Machine-mode.
+        %
+        To do this the previously reserved combinations in the $pmpcfg$ register and the LRWX combinations are used to define different types of shared memory as seen in \cref{fig:smepmp_visual}.
+        \begin{figure}
+            \centering
+            \includegraphics[width=\textwidth]{pics/smepmp-visual-representation.png}
+            \caption{\Gls{smepmp} visual representation}
+            \cite{smepmp_docs}
+            \label{fig:smepmp_visual}
+        \end{figure}
+
+\item ``There are use cases where developers want to enforce PMP rules in M-mode during the boot process, that are also able to modify, merge, and / or remove later on.
+        Since a rule that is enforced in M-mode also needs to be locked (or else badly written or malicious M-mode software can remove it at any time),
+        the only way for developers to approach this is to keep adding PMP rules to the chain and rely on rule priority.
+        This is a waste of PMP rules and since it's only needed during boot, mseccfg.RLB is a simple workaround that can be used temporarily and then disabled and locked down''.~\cite{smePMP_apendix}
+        %
+        % To solve this the \gls{rlb} configuration bit is used.
+        \Gls{smepmp} introduces the \gls{rlb} configuration bit to solve this temporary problem.
+        When this bit is set the L-bit does not actually lock the \gls{pmp} entry, meaning these entries can still be modified.
+        To ensure that this bit is not misused it can only be set when no entries are locked.
+\end{enumerate}
+
+To disallow memory access to memory that is not within any \gls{pmp} range the \gls{mmwp} bit is set.
+When this bit is set all memory access outside the \gls{pmp} defined ranges is blocked from all modes, while if it is not set, Machine-mode can access all this memory.
+This default disallow behavior is preferred in security best practices. % TODO mention the execution restriction

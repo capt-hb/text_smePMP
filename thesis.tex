@@ -2,10 +2,10 @@
 \setup{
   title={Reasoning about smePMP},
   author={Yari Vanherpe},
-  promotor={Prof.\ Dominique Devriese},
+  promotor={Prof.\ Dominique Devriese \and Steven Keuchel},
   %TODO assessor
   assessor={I have no idea},
-  assistant={Sander Huyghebaert \and Steven Keuchel}}
+  assistant={Sander Huyghebaert}}
 % Remove the "%" on the next line for generating the cover page
 %\setup{coverpageonly}
 % Remove the "%" before the next "\setup" to generate only the first pages
@@ -23,6 +23,7 @@
 % Finally the hyperref package is used for pdf files.
 % This can be commented out for printed versions.
 \usepackage[pdfusetitle,colorlinks,plainpages=false]{hyperref}
+\usepackage{cleveref}
 \usepackage[table]{xcolor} % 'table'optie is handig voor cell backgrounds
 \usepackage{xltabular}    % combinatie van longtable + tabularx
 \usepackage[table]{xcolor}
@@ -68,7 +69,6 @@ The intention is that this should be limited to 1 page.
 %FIXME
 % \printglossary[type=\acronymtype]
 \printnoidxglossary[type=\acronymtype]
-\clearpage
 % TODO list of abbreviations
 % \chapter{List of abbreviations and symbols}
 % \section*{abbreviations}
@@ -99,6 +99,9 @@ The intention is that this should be limited to 1 page.
 \include{chapters/intro}
 % \chapter{Background}
 \include{chapters/background}
+\include{chapters/Katamaran}
+\include{chapters/smePMP}
+\include{chapters/implementation}
 % \include{chapter-1}
 % \include{chapter-2}
 % % ... and so on until

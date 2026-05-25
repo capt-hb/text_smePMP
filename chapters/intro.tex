@@ -1,6 +1,25 @@
 \glsresetall
 
-\chapter{Introduction}
-\label{cha:intro}
-this is a test
+\chapter{Introduction}\label{cha:intro}
 %TODO
+Memory protection is a fundamental security mechanism in modern processors, ensuring that software components cannot access memory regions that are not authorized to use.
+In RISC-V systems, the \gls{pmp} extension provides a mechanism to enforce memory protection, allowing Machine-mode code to be protected from User- and Supervisor-mode access.
+However, if Machine-mode code is sufficiently complex, vulnerabilities can arise and without protections within Machine-mode this becomes a problem.
+This is why \gls{smepmp} was developed: it enables additional restrictions on Machine-mode while also keeping the capabilities of \gls{pmp}.
+
+To ensure these security implications are met, formal verification can be used rather than relying solely on testing.
+Formal verification provides mathematical proofs for statements you make.
+Using these mathematical proofs we can formally formulate both the security guarantees that are expected and the definition of the extension ---in this case \gls{pmp}.
+Once these are both defined we can prove whether the model meets the specified security guarantees.
+
+Katamaran~\cite{universal_contract} is a tool that provides a framework to make this easier and is already applied to verify \gls{pmp}.
+It does however currently not include the \gls{smepmp} extension.
+Extending Katamaran's \gls{pmp} definition to include \gls{smepmp} is necessary to formally verify the security guarantees.
+However, this extension is non-trivial, we must first add the status register required by \gls{smepmp} before updating the extension's definition.
+Once the definition is updated, the formal proofs must also be extended to reflect \gls{smepmp}'s security guarantees.
+
+The contribution of this thesis is to extend the Katamaran prover's RISC-V \gls{pmp} case study to formally verify the \gls{smepmp} extension.
+This involved three main steps:
+first, understanding the existing \gls{pmp} verification in the Katamaran codebase,
+second, adding the mseccfg register with the correct fields required by \gls{smepmp}
+and third, updating the prover's \gls{smepmp} definition and the associated proofs.

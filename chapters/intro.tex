@@ -2,24 +2,29 @@
 
 \chapter{Introduction}\label{cha:intro}
 %TODO
-Memory protection is a fundamental security mechanism in modern processors, ensuring that software components cannot access memory regions that are not authorized to use.
+Memory protection is a fundamental security mechanism in modern processors, ensuring that software components cannot access memory regions that they are not authorized to use.
 In RISC-V systems, the \gls{pmp} extension provides a mechanism to enforce memory protection, allowing Machine-mode code to be protected from User- and Supervisor-mode access.
 However, if Machine-mode code is sufficiently complex, vulnerabilities can arise and without protections within Machine-mode this becomes a problem.
-This is why \gls{smepmp} was developed: it enables additional restrictions on Machine-mode while also keeping the capabilities of \gls{pmp}.
+This is why \gls{smepmp} was developed: it enables additional restrictions on Machine-mode while also keeping the capabilities of \gls{pmp}. \sand{Maybe make this a bit more clear? it enables protection from potentially malicious Machine-mode components, both in Machine-mode and lower privilege levels}
 
+\sand{Paragraph: you jump straight to formal verification. Give a brief summary (1-2 sentence) on the current situation w.r.t. the security guarantee verification, before jumping to formal verification that gives stronger assurance that said guarantees hold. Briefly: normally these security guarantees are specified in prose (somewhere in large, non-executable pdf doc, with some pseudo-code if you're lucky); we want stronger results -> formal verification to the rescue!}
 To ensure these security implications are met, formal verification can be used rather than relying solely on testing.
+\sand{The next few sentences are odd, formal verification is the formal study of systems (in the broadest sense of the word), where we state theorems/lemmas about said system and verify them with (a mechanized) proof.}
 Formal verification provides mathematical proofs for statements you make.
 Using these mathematical proofs we can formally formulate both the security guarantees that are expected and the definition of the extension ---in this case \gls{pmp}.
 Once these are both defined we can prove whether the model meets the specified security guarantees.
 
+\sand{I'm missing, at the very least, a mention of the proof assistant Rocq. All of this could've been done on paper, using SMT solvers, ...}
 Katamaran~\cite{universal_contract} is a tool that provides a framework to make this easier and is already applied to verify \gls{pmp}.
 It does however currently not include the \gls{smepmp} extension.
-Extending Katamaran's \gls{pmp} definition to include \gls{smepmp} is necessary to formally verify the security guarantees.
-However, this extension is non-trivial, we must first add the status register required by \gls{smepmp} before updating the extension's definition.
+Extending Katamaran's \gls{pmp} definition to include \gls{smepmp} is necessary to formally verify the security guarantees. \sand{Rephrase this so you talk about "modified"/"extended"/... security guarantee}
+However, this extension is non-trivial, we must first add the status register required by \gls{smepmp} before updating the extension's definition. \sand{This does make it sound trivial though :) You could draw from the limitation of the earlier work to state the non-trivialness of the extension better: due to the RISC-V PMP case studies minimal model, we had to first extend it with an additional status register and the handling of this new register. This required modifications to the specification and updates to some proofs.}
 Once the definition is updated, the formal proofs must also be extended to reflect \gls{smepmp}'s security guarantees.
 
 The contribution of this thesis is to extend the Katamaran prover's RISC-V \gls{pmp} case study to formally verify the \gls{smepmp} extension.
 This involved three main steps:
 first, understanding the existing \gls{pmp} verification in the Katamaran codebase,
-second, adding the mseccfg register with the correct fields required by \gls{smepmp}
-and third, updating the prover's \gls{smepmp} definition and the associated proofs.
+second, adding the mseccfg register with the correct fields required by \gls{smepmp} \sand{Implementation, specification and proofs! Don't sell yourself short, articulate the contribution clearly}
+and third, updating the prover's \gls{smepmp} definition and the associated proofs. \sand{This last point is phrased wrong. You extended the RISC-V PMP case study (after mseccfg) with Smepmp (not Katamaran).}
+
+\sand{General intro remark: you have all the "pieces" for the introduction, just requires a bit of smoothing out. I would, however, still keep it open to modification w.r.t. contributions and maybe phrasing of the final contribution depending on the evaluation you are able to carry out.}

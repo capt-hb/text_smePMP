@@ -10,27 +10,45 @@
 %     \item we want to extend to include \gls{smepmp}
 % \end{itemize}
 
-% Katamaran is a tool to formally verify \textmu{}sail programs such as ISA definitions, it does this by verifing the code against a \gls{uc}.
-% A \gls{uc} are specifications of the intended behaviors of the \textmu{}sail program to verify.
-% In the case of ISA definitions these \glspl{uc} can be the security guarantees for the ISA.
-% Katamaran can then mathematically prove whether the \textmu{}sail code adheres to the \gls{uc} instead of needing to have a whole bunch of tests to attempt to cover the whole codebase.~\cite{universal_contract}
+% % Katamaran is a framework for formally verifying \textmu{}Sail programs, including ISA definitions, through the use of \glspl{uc}.
+% % \Glspl{uc} formally specify the intended behaviour of a \textmu{}Sail program using preconditions and postconditions.
+% % For ISA models, these contracts can be used to express architectural security guarantees.
+% % Katamaran then proves that the \textmu{}Sail implementation satisfies these contracts, enabling mathematical guarantees about correctness and security beyond what can be achieved through testing alone.~\cite{universal_contract}
 
-Katamaran is a framework for formally verifying \textmu{}Sail programs, including ISA definitions, through the use of \glspl{uc}.
-\Glspl{uc} formally specify the intended behaviour of a \textmu{}Sail program using preconditions and postconditions.
-For ISA models, these contracts can be used to express architectural security guarantees.
-Katamaran then proves that the \textmu{}Sail implementation satisfies these contracts, enabling mathematical guarantees about correctness and security beyond what can be achieved through testing alone.~\cite{universal_contract}
+% % The Katamaran paper includes a case study for the RISC-V \gls{pmp} extension.
+% % This case study formalizes the PMP specification in \textmu{}Sail and defines a \gls{uc} capturing the security properties related to \gls{pmp}'s memory isolation and access control.
 
-The Katamaran paper includes a case study for the RISC-V \gls{pmp} extension.
-This case study formalizes the PMP specification in \textmu{}Sail and defines a \gls{uc} capturing the security properties related to \gls{pmp}'s memory isolation and access control.
+% % This \textmu{}Sail ISA model is derived from the official RISC-V Sail implementation for \gls{pmp}~\cite{risk-v_sail}.
+% % Sail is a language designed to describe ISA semantics and is used by RISC-V to define it's standard.
+% % These models are translated into \textmu{}Sail to be used in Katamaran as a representative model closely aligned with the official RISC-V specification.
 
-% TODO
-This \textmu{}Sail ISA model is derived from the official RISC-V Sail implementation for \gls{pmp}~\cite{risk-v_sail}.
-Sail is a language designed to describe ISA semantics and is used by RISC-V to define it's standard.
-These models are translated into \textmu{}Sail to be used in Katamaran as a representative model closely aligned with the official RISC-V specification.
+% % The current PMP model is intentionally limited and primarily serves as a proof of concept rather than a complete PMP implementation.
+% % It supports only two \gls{pmp} configurations instead of the 16 or 64 entries supported by the RISC-V specification, and only implements the \gls{tor} addressing mode.
 
-% The model is however limited to just a proof of concept instead of a full \gls{pmp} model, it only allows for only 2 \gls{pmp} configurations instead of 16 or 64 and only allows the \gls{tor} addressing mode.% TODO see GPT output
-The current PMP model is intentionally limited and primarily serves as a proof of concept rather than a complete PMP implementation.
-It supports only two \gls{pmp} configurations instead of the 16 or 64 entries supported by the RISC-V specification, and only implements the \gls{tor} addressing mode.
+% % The model also does not include the \gls{smepmp} extension.
+% % This thesis extends the existing Katamaran \gls{pmp} case study with support for \gls{smepmp} by extending the ISA model and the associated formal verification.
 
-The model also does not include the \gls{smepmp} extension.
-This thesis extends the existing Katamaran \gls{pmp} case study with support for \gls{smepmp} by extending the ISA model and the associated formal verification.%adding the required architectural state, updating the \gls{pmp} semantics and extending the associated proofs.
+Katamaran is a framework for verifying \textmu{}Sail programs using \glspl{uc}.  
+A \gls{uc} specifies the expected behaviour of a program in terms of preconditions and postconditions, and Katamaran proves that the given \textmu{}Sail implementation satisfies these contracts.
+This makes it possible to establish formal correctness and security properties for ISA models, rather than relying only on testing or simulation.~\cite{universal_contract}
+
+Katamaran is built around \textmu{}Sail, a subset of Sail to enable easier verification.
+In this setting, the ISA description serves as the executable model, while the \gls{uc} captures the security-relevant properties that the model must satisfy.
+This is particularly useful for architectural mechanisms such as memory protection, where one wants to prove that the model enforces the intended isolation guarantees.
+
+\section{The RISC-V PMP Case Study}
+Katamaran includes a case study for the RISC-V \gls{pmp} extension.
+The case study formalizes the \gls{pmp} behaviour in \textmu{}Sail and proves a \gls{uc} expressing the memory-isolation and access-control properties expected from \gls{pmp}.
+
+% TODO add risc-v_sail to references.bib
+The \textmu{}Sail model is derived from the official RISC-V Sail implementation.%~\cite{risc-v_sail}.
+As a result, this model stays close to the real-world specification.
+
+The existing model is however intentionally limited to serve as a proof of concept.
+It only supports two \gls{pmp} entries, rather than 16 or 64 allowed in the real RISC-V specification.
+It also only supports the \gls{tor} addressing mode.
+
+The \textmu{}Sail model, just like the official RISC-V Sail model implements \gls{pmp} using a \texttt{pmpCheck} function.
+This function is complex enough that it itself calls multiple functions.
+To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function.
+When this is done, the prover needs to prove that these contracts do correctly model the behaviour of the corresponding function, once this is done the prover can use these contracts to prove the \gls{uc}.

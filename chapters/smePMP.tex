@@ -1,0 +1,83 @@
+\glsresetall
+
+\chapter{Enhaced Physical Memory Protection}
+% \Gls{pmp} is relatively permissive and more restriction are wanted.
+% To add more restrictions \gls{smepmp} was developed.
+% This adds the possibility for Machine-mode only memory with access restrictions as well as User- and Supervisor-mode only memory.
+% It also adds the possibility to disallow memory access when memory is not within a \gls{pmp} region, including in Machine-mode.
+% While \gls{pmp} effectively isolates User- and Supervisormode from Machine-mode, it assumes Machine-mode code is trustworthy.
+% \Gls{smepmp} addresses this by adding restriction for potentially buggy Machine-mode code~\cite{smePMP_apendix}.
+\Gls{pmp} is relatively permissive and assumes that Machine-mode software is fully trusted.
+However, additional restrictions on Machine-mode memory accesses are desirable to protect against potentially buggy or vulnerable Machine-mode code.
+To address this, the RISC-V specification introduces \gls{smepmp}.
+
+\Gls{smepmp} extends \gls{pmp} with additional protection mechanisms.
+It introduces the possibility to define Machine-mode-only memory regions with restricted access permissions, as well as memory regions accessible only from User- and Supervisor-mode.
+Furthermore, it allows memory accesses outside configured \gls{pmp} regions to be denied even in Machine-mode.
+While \gls{pmp} isolates User- and Supervisor-mode from Machine-mode, \gls{smepmp} additionally enables restrictions within Machine-mode itself.~\cite{smePMP_apendix}
+
+\section{\texttt{mseccfg} Control Status Register}
+To configure these additional security mechanisms, \gls{smepmp} introduces several control bits in the \texttt{mseccfg} \gls{csr}.
+The relevant fields are \gls{mmwp}, \gls{mml}, and \gls{rlb}.
+
+The existing Katamaran \gls{pmp} model does not include the \texttt{mseccfg} register, since the currently implemented features do not require it.
+Supporting \gls{smepmp} therefore requires extending the model with the \texttt{mseccfg} register together with definitions for accessing its individual fields by name.
+
+% This \gls{csr} is added by adding it to the list of existing \glspl{csr}.
+% We then need to define the layout of this \gls{csr} which also defines the names of the seperate fields.
+% Now that the register and its fields are defined we need to ensure the proofs also know these exist to verify the correct working.
+% In total this is a change of 75 lines in 5 files.
+
+Support for this \gls{csr} is added by adding the \texttt{mseccfg} register to the list of existing \glspl{csr}.
+The register layout and associated field definition were then added to the model, this allows for the use of the bit by name.
+Finally, the proof's helper functions are updated to accommodate the new register and its fields.
+% explain that the proof (specification) need to know onwership of the register
+
+Adding support for the \texttt{mseccfg} register requires modifications across five files and introduce approximatly 75 lines of changes.
+% FIXME move amount changed to evaluation
+% TODO how much changed
+
+\section{Changes to PMP Semantics}
+The fields in the \texttt{mseccfg} register extend the behavior of the existing \gls{pmp} mechanism.
+As a result, the access-checking semantics implemented in the current Katamaran \gls{pmp} model must be updated to correctly represent the \gls{smepmp} specification.
+
+The following subsections describe the behavior introduced by each \texttt{mseccfg} field together with the corresponding changes required in the formal model.
+
+\subsection{Machine-Mode Whitelist Policy}
+The \gls{mmwp} bit is the bit that disables the possibility for Machine-mode to access memory that is not covered by any \gls{pmp} range.
+This ensures that all accessible memory regions must be explicitly configured, forcing the system designer to intentionally specify the required memory permissions.
+The \gls{mmwp} bit is also a sticky bit, meaning that once this bit is set it cannot be reset until the whole system resets.
+This prevents the restriction from being circumvented by temporarily disabling the bit.
+
+The Katamaran \gls{pmp} model determines which \gls{pmp} region applies to a memory access.
+With \gls{pmp}, accesses from Machine-mode are permitted when the accessed memory does not fall within any \gls{pmp} range while access from other modes are denied.
+When \gls{mmwp} is set, this behavior chages such that Machine-mode can no longer access unmatched memory.
+
+\subsection{Machine-Mode Lockdown}
+\Gls{mml} is the bit that allows for the creation of restricted machine only memory and the creation of User- and Supervisor-mode only memory.
+When this bit is set it adds functionallity to the L-bit in the \texttt{pmpcfg} registers.
+With the \gls{mml} bit set a locked entry becomes Machine-mode only, while an entry that is not locked becomes User- and Supervisor mode only.
+This bit, just like \gls{mmwp} is a sticky bit to prevent circumvention by disabling the bit.
+
+This does however not allow for shared memory between Machine-mode and User- and Supervisor-mode.
+To solve this the previously reserved combinations with the read-bit being `0' and the write bit `1' are used to be shared memory.
+The combination of both the lock-, read-, write- and execute- bit being `1' also becomes shared memory.
+The permissions of these combinations also do not reflect the read-, write- and execute- bits but follow the permissions in~\cref{fig:smepmp_visual}. % TODO move image to this chapter
+
+%TODO changes in katamaran
+
+\subsection{Rule Locking Bypass}
+\Gls{rlb} is a bypass of the locking rule made to fix an issue caused by \gls{mml} as described in the RISC-V \gls{smepmp} appendix:
+``There are use cases where developers want to enforce PMP rules in M-mode during the boot process, that are also able to modify, merge, and / or remove later on.
+Since a rule that is enforced in M-mode also needs to be locked (or else badly written or malicious M-mode software can remove it at any time),
+the only way for developers to approach this is to keep adding PMP rules to the chain and rely on rule priority.
+This is a waste of PMP rules and since it's only needed during boot, mseccfg.RLB is a simple workaround that can be used temporarily and then disabled and locked down''.~\cite{smePMP_apendix}
+The \gls{rlb} rule thus makes it possible to modify locked \gls{pmp} entries.
+
+To ensure this is not used to bypass entries that do need to be locked, this bit can only be set when no entries are locked.
+
+%TODO changes in katamaran
+
+\section{Changes in the Proofs}
+
+\section{some conclusion}% TODO better title

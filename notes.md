@@ -25,8 +25,41 @@ explanation for what needs to change
 
 
 
-steven higher on copromotor
-
-assessor: benedict marton (check)`
-
 how much effort into code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## TODO
+

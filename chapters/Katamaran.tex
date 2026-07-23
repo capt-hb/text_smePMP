@@ -41,7 +41,7 @@ Katamaran includes a case study for the RISC-V \gls{pmp} extension.
 The case study formalizes the \gls{pmp} behaviour in \textmu{}Sail and proves a \gls{uc} expressing the memory-isolation and access-control properties expected from \gls{pmp}.
 
 % TODO add risc-v_sail to references.bib
-The \textmu{}Sail model is derived from the official RISC-V Sail implementation.%~\cite{risc-v_sail}.
+The \textmu{}Sail model is derived from the official RISC-V Sail implementation~\cite{risc-v_sail}.
 As a result, this model stays close to the real-world specification.
 
 The existing model is however intentionally limited to serve as a proof of concept.
@@ -52,3 +52,6 @@ The \textmu{}Sail model, just like the official RISC-V Sail model implements \gl
 This function is complex enough that it itself calls multiple functions.
 To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function.
 When this is done, the prover needs to prove that these contracts do correctly model the behaviour of the corresponding function, once this is done the prover can use these contracts to prove the \gls{uc}.
+
+% TODO add example Sail -> µSail + contract + verification
+%       (met figure om aan te tonen wat wel en niet door de user moet 'provided' worden)

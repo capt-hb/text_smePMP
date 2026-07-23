@@ -3,7 +3,6 @@
   title={Reasoning about smePMP},
   author={Yari Vanherpe},
   promotor={Prof.\ Dominique Devriese \and Steven Keuchel},
-  %TODO assessor?
   assessor={Benedikt Gierlichs \and M\'arton Bogn\'ar },
   assistant={Sander Huyghebaert}}
 % Remove the "%" on the next line for generating the cover page
@@ -31,11 +30,11 @@
 \usepackage{xltabular,enumitem} 
 \usepackage[table]{xcolor} 
 \usepackage{pdflscape}
+\usepackage{listings}
 
 %\usepackage[disable]{todonotes}
 \usepackage{todonotes} % Put the 'disable' attr to hide all todonotes (see line above)
 \newcommand{\sand}[1]{\todo[color=blue!40,author=Sander,inline]{#1}}
-
 %%%%%%%
 % The lipsum package is used to generate random text.
 % You never need this in a real master's thesis text!
@@ -104,7 +103,7 @@ The intention is that this should be limited to 1 page.
 \include{chapters/intro}
 % \chapter{Background}
 \include{chapters/background}
-\include{chapters/Katamaran}
+\include{chapters/Katamaran_changes}
 \include{chapters/smePMP}
 % \include{chapter-1}
 % \include{chapter-2}

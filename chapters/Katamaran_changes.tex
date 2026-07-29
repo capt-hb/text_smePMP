@@ -1,6 +1,6 @@
 \chapter{Katamaran}
-Katamaran is a framework for verifying \textmu{}Sail programs using \glspl{uc}.  
-A \gls{uc} specifies the expected behaviour of a program in terms of preconditions and postconditions, and Katamaran proves that the given \textmu{}Sail implementation satisfies these contracts.
+Katamaran is a framework for verifying \textmu{}Sail programs using \glspl{uc}. \sand{While we focus on veryfing UCs in the case studies, Katamaran is not limited to "just that". It supports veryfication of any kind.}
+A \gls{uc} specifies the expected behaviour of a program in terms of preconditions and postconditions, and Katamaran proves that the given \textmu{}Sail implementation satisfies these contracts. \sand{In the case of security-properties, the UC captures the security guarantees of the ISA. Make sure you also explain why and what UCs are. They allow reasoning about (the interaction with) unknown code as well. If all you have is known code, than you wouldn't need a UC.}
 This makes it possible to establish formal correctness and security properties for ISA models, rather than relying only on testing or simulation.~\cite{universal_contract}
 
 Katamaran is built around \textmu{}Sail, a subset of Sail to enable easier verification.
@@ -8,26 +8,27 @@ In this setting, the ISA description serves as the executable model, while the \
 This is particularly useful for architectural mechanisms such as memory protection, where one wants to prove that the model enforces the intended isolation guarantees.
 
 \section{The RISC-V PMP Case Study}
-Katamaran includes a case study for the RISC-V \gls{pmp} extension.
+Katamaran includes a case study for the RISC-V \gls{pmp} extension. \sand{nit: for RISC-V *with* the PMP extension. Current phrasing seems to single out just PMP, which would also be possible}
 The case study formalizes the \gls{pmp} behaviour in \textmu{}Sail and proves a \gls{uc} expressing the memory-isolation and access-control properties expected from \gls{pmp}.
 
 The \textmu{}Sail model is derived from the official RISC-V Sail implementation~\cite{risc-v_sail} as you can see in the \texttt{pmpCheckRWX}-function in \cref{lst:sail_code, lst:microsail_code}. %TODO insert these listings and look for a good example function ¿ pmpCheckRWX ?
 As a result, this model stays close to the real-world specification.
 
-The existing model is however intentionally limited to serve as a proof of concept.
-It only supports two \gls{pmp} entries, rather than 16 or 64 allowed in the real RISC-V specification.
+The existing model is however intentionally limited to serve as a proof of concept. \sand{The model is limited due to the manual translation we did at the time and scaling reasons. It's not a proof of concept, it's a real system with a real verification.}
+It only supports two \gls{pmp} entries, rather than 16 or 64 allowed in the real RISC-V specification. \sand{To add on the previous comment: while there have to be 16 or 64 entries addressable, note that having just 2, with 14 disabled/unavailable entries is also valid (and there are current RISC-V processors sold with such setups)}
 It also only supports the \gls{tor} addressing mode.
 
 The \textmu{}Sail model, just like the official RISC-V Sail model implements \gls{pmp} using a \texttt{pmpCheck} function.
 This function is complex enough that it itself calls multiple functions.
 
-To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function as seen in \cref{lst:microsail_contract}.
+\sand{In this paragraph I'm missing some information on UCs. You talk quite a bit about defining contracts for functions, but that leaves a question: if the UC has a pre- and postcondition, over what is it defined? The answer is the fetch-decode-execute cycle. Maybe at some explanation so that the concept of a UC is more tangible for readers.}
+To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function as seen in \cref{lst:microsail_contract}. \sand{You don't "implement" the UC, you formalize, verify and apply it. ;) We define contracts for individual functions to aid in the verification of the UC, but it also enables verification of functional correctness of an indivudal piece, as well as making it easier to debug smaller parts of the verification. Technically you could just verify the UC without writing contracts for all the functions of the ISA spec, but it would be a horrible experience. 
 These contracts have a precondition which needs to be true for every invocation of the function and a postcondition which also needs to be true after the invocation of the corresponding function.
 In the given example the precondition is \top which means this condition is always fulfilled, but the postcondition is a bit more complex.
 The postcondition starts of with converting the `L', `A', `X', `W', `R' which are part of the pmpcfg-register into a usable form for this function.
 Then it is checked whether the access succeded according to the \textmu{}Sail code, if it did we check whether this is supposed to happen, otherwise the function is regarded as correct.
 
-When all the function's contracts are proven true, the prover can use these contracts to prove the \gls{uc}.
+When all the function's contracts are proven true, the prover can use these contracts to prove the \gls{uc}. \sand{I get what you mean here, but maybe rephrase it a bit: "these contracts can then be used to prove the UC". The term "prover" can mean either (1) the person proving these contracts, or (2) the tool, Katamaran/Rocq.}
 
 % TODO also include the contract and verification for the chosen example function
 

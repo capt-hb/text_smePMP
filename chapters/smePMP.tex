@@ -1,12 +1,6 @@
 \glsresetall
 
-\chapter{Enhaced Physical Memory Protection}
-% \Gls{pmp} is relatively permissive and more restriction are wanted.
-% To add more restrictions \gls{smepmp} was developed.
-% This adds the possibility for Machine-mode only memory with access restrictions as well as User- and Supervisor-mode only memory.
-% It also adds the possibility to disallow memory access when memory is not within a \gls{pmp} region, including in Machine-mode.
-% While \gls{pmp} effectively isolates User- and Supervisormode from Machine-mode, it assumes Machine-mode code is trustworthy.
-% \Gls{smepmp} addresses this by adding restriction for potentially buggy Machine-mode code~\cite{smePMP_apendix}.
+\chapter{Enhanced Physical Memory Protection}
 \Gls{pmp} is relatively permissive and assumes that Machine-mode software is fully trusted.
 However, additional restrictions on Machine-mode memory accesses are desirable to protect against potentially buggy or vulnerable Machine-mode code.
 To address this, the RISC-V specification introduces \gls{smepmp}.
@@ -16,6 +10,10 @@ It introduces the possibility to define Machine-mode-only memory regions with re
 Furthermore, it allows memory accesses outside configured \gls{pmp} regions to be denied even in Machine-mode.
 While \gls{pmp} isolates User- and Supervisor-mode from Machine-mode, \gls{smepmp} additionally enables restrictions within Machine-mode itself.~\cite{smePMP_apendix}
 
+In this chapter, we describe the modifications required to extend the existing Katamaran case study for \gls{pmp} with support for \gls{smepmp}.
+We first introduce the additional architectural state required by the extension, followed by the changes to the \gls{pmp} semantics and their implementation in the Katamaran model.
+Finally, we discuss the corresponding changes to the function contracts.
+
 \section{\texttt{mseccfg} Control Status Register}
 To configure these additional security mechanisms, \gls{smepmp} introduces several control bits in the \texttt{mseccfg} \gls{csr}.
 The relevant fields are \gls{mmwp}, \gls{mml}, and \gls{rlb}.
@@ -23,38 +21,33 @@ The relevant fields are \gls{mmwp}, \gls{mml}, and \gls{rlb}.
 The existing Katamaran \gls{pmp} model does not include the \texttt{mseccfg} register, since the currently implemented features do not require it.
 Supporting \gls{smepmp} therefore requires extending the model with the \texttt{mseccfg} register together with definitions for accessing its individual fields by name.
 
-% This \gls{csr} is added by adding it to the list of existing \glspl{csr}.
-% We then need to define the layout of this \gls{csr} which also defines the names of the seperate fields.
-% Now that the register and its fields are defined we need to ensure the proofs also know these exist to verify the correct working.
-% In total this is a change of 75 lines in 5 files.
-
 Support for this \gls{csr} is added by adding the \texttt{mseccfg} register to the list of existing \glspl{csr}.
-The register layout and associated field definition were then added to the model, this allows for the use of the bit by name.
+The register layout and associated field definitions were then added to the model, allowing the individual fields to be accessed symbolically by name.
 Finally, the proof's helper functions are updated to accommodate the new register and its fields.
-% explain that the proof (specification) need to know onwership of the register
 
-Adding support for the \texttt{mseccfg} register requires modifications across five files and introduce approximatly 75 lines of changes.
 % FIXME move amount changed to evaluation
-% TODO how much changed
+% Adding support for the \texttt{mseccfg} register requires modifications across five files and introduce approximatly 75 lines of changes.
 
 \section{Changes to PMP Semantics}
-The fields in the \texttt{mseccfg} register extend the behavior of the existing \gls{pmp} mechanism.
+The fields in the \texttt{mseccfg} register extend the behaviour of the existing \gls{pmp} mechanism.
 As a result, the access-checking semantics implemented in the current Katamaran \gls{pmp} model must be updated to correctly represent the \gls{smepmp} specification.
 
-The following subsections describe the behavior introduced by each \texttt{mseccfg} field together with the corresponding changes required in the formal model.
+The following subsections describe the behaviour introduced by each \texttt{mseccfg} field together with the corresponding changes required in the formal model.
 
 \subsection{Machine-Mode Whitelist Policy}
-The \gls{mmwp} bit is the bit that disables the possibility for Machine-mode to access memory that is not covered by any \gls{pmp} range.
+The \gls{mmwp} bit disables the possibility for Machine-mode to access memory that is not covered by any \gls{pmp} range.
 This ensures that all accessible memory regions must be explicitly configured, forcing the system designer to intentionally specify the required memory permissions.
 The \gls{mmwp} bit is also a sticky bit, meaning that once this bit is set it cannot be reset until the whole system resets.
 This prevents the restriction from being circumvented by temporarily disabling the bit.
 
+% changes in Katamaran
 The Katamaran \gls{pmp} model determines which \gls{pmp} region applies to a memory access.
-With \gls{pmp}, accesses from Machine-mode are permitted when the accessed memory does not fall within any \gls{pmp} range while access from other modes are denied.
-When \gls{mmwp} is set, this behavior chages such that Machine-mode can no longer access unmatched memory.
+With \gls{pmp}, accesses from Machine-mode are permitted when the accessed memory does not fall within any \gls{pmp} range while accesses from other modes are denied.
+When \gls{mmwp} is set, this behaviour changes such that Machine-mode can no longer access unmatched memory.
+This required extending the access-checking logic with an additional condition that consults the value of the \gls{mmwp} bit before allowing Machine-mode accesses to such memory.
 
 \subsection{Machine-Mode Lockdown}
-\Gls{mml} is the bit that allows for the creation of restricted machine only memory and the creation of User- and Supervisor-mode only memory.
+The \gls{mml} bit allows for the creation of restricted Machine-mode only memory and the creation of User- and Supervisor-mode only memory.
 When this bit is set it adds functionallity to the L-bit in the \texttt{pmpcfg} registers.
 With the \gls{mml} bit set a locked entry becomes Machine-mode only, while an entry that is not locked becomes User- and Supervisor mode only.
 This bit, just like \gls{mmwp} is a sticky bit to prevent circumvention by disabling the bit.
@@ -62,12 +55,22 @@ This bit, just like \gls{mmwp} is a sticky bit to prevent circumvention by disab
 This does however not allow for shared memory between Machine-mode and User- and Supervisor-mode.
 To solve this the previously reserved combinations with the read-bit being `0' and the write bit `1' are used to be shared memory.
 The combination of both the lock-, read-, write- and execute- bit being `1' also becomes shared memory.
-The permissions of these combinations also do not reflect the read-, write- and execute- bits but follow the permissions in~\cref{fig:smepmp_visual}. % TODO move image to this chapter
+The permissions of these combinations also do not reflect the read-, write- and execute- bits but follow the permissions in~\cref{fig:smepmp_visual}.
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{pics/smepmp-visual-representation.png}
+    \caption{\Gls{smepmp} visual representation}
+    \cite{smepmp_docs}
+    \label{fig:smepmp_visual}
+\end{figure}
 
-%TODO changes in katamaran
+% changes in katamaran
+In the existing Katamaran model, the access permissions are determined solely from the R-, W-, and X-bits together with the privilege mode.
+Supporting \gls{mml} required extending this permission evaluation such that the interpretation of the L-bit depends on the value of \gls{mml}.
+In addition, the shared-memory encodings are checked before the standard permission evaluation, as they no longer follow the interpretation of the R-, W-, and X-bits.
 
 \subsection{Rule Locking Bypass}
-\Gls{rlb} is a bypass of the locking rule made to fix an issue caused by \gls{mml} as described in the RISC-V \gls{smepmp} appendix:
+The \gls{rlb} bit is a bypass of the locking rule made to fix an issue caused by \gls{mml} as described in the RISC-V \gls{smepmp} appendix:
 ``There are use cases where developers want to enforce PMP rules in M-mode during the boot process, that are also able to modify, merge, and / or remove later on.
 Since a rule that is enforced in M-mode also needs to be locked (or else badly written or malicious M-mode software can remove it at any time),
 the only way for developers to approach this is to keep adding PMP rules to the chain and rely on rule priority.
@@ -76,8 +79,89 @@ The \gls{rlb} rule thus makes it possible to modify locked \gls{pmp} entries.
 
 To ensure this is not used to bypass entries that do need to be locked, this bit can only be set when no entries are locked.
 
-%TODO changes in katamaran
+% changes in katamaran
+To determine if an entry is locked, the original Katamaran model just needs to check the L-bit.
+To add the \gls{rlb} bit's functionality the existing model's logic determining whether a \gls{pmp} entry should be treated as locked is updated.
 
-\section{Changes in the Proofs}
+\section{Changes in the Contracts}
+All of these changes modify the behaviour of the underlying functions, causing the existing function contracts to no longer accurately describe their semantics.
+The contracts must therefore be updated to reflect the behaviour introduced by \gls{smepmp}.
+Consequently, the changes made to the contracts closely mirror those made to the ISA model, ensuring that the formal specification remains consistent with the implementation.
 
-\section{some conclusion}% TODO better title
+As an example, \cref{lst:readCSR} shows the changes made to the contract of the readCSR function.
+Since readCSR now needs to access the newly introduced mseccfg register, its contract must also include this register in both the precondition and postcondition.
+This ensures that the contract accurately reflects the function's interaction with the machine state while preserving the guarantee that reading a CSR does not modify the contents of mseccfg.
+
+% FIXME? add fontsize=\small (or \tiny) in []?
+\begin{minted}[linenos, breaklines, frame=single, caption={Changes in readCSR contract}, label={lst:readCSR}]{diff}
+Definition sep_contract_readCSR : SepContractFun readCSR :=
+  {| sep_contract_logic_variables := [csr :: ty_csridx; "mpp" :: ty_privilege;
+                                      "mtvec" :: ty_xlenbits; "mcause" :: ty_mcause;
+                                      "mepc" :: ty_xlenbits; "cfg0" :: ty_pmpcfg_ent; "cfg1" :: ty_pmpcfg_ent; "addr0" :: ty_xlenbits; "addr1" :: ty_xlenbits];
+     sep_contract_localstore      := [term_var csr];
+     sep_contract_precondition    :=
+      ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [nenv term_var "mpp"; term_var "mpie"; term_var "mie" ]
++      ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [nenv term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+       ∗ mtvec ↦ term_var "mtvec"
+       ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
+       ∗ mepc ↦ term_var "mepc"
+       ∗ ∃ "mip", mip ↦ term_var "mip"
+       ∗ ∃ "mie", mie ↦ term_var "mie"
+       ∗ mcause ↦ term_var "mcause"
+       ∗ pmp0cfg ↦ term_var "cfg0"
+       ∗ pmp1cfg ↦ term_var "cfg1"
+       ∗ pmpaddr0 ↦ term_var "addr0"
+       ∗ pmpaddr1 ↦ term_var "addr1";
+     sep_contract_result          := "result_readCSR";
+     sep_contract_postcondition   :=
+       ∃ "result", term_var "result_readCSR" = term_var "result"
+       ∗ ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [term_var "mpp"; term_var "mpie"; term_var "mie" ]
++      ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+       ∗ mtvec ↦ term_var "mtvec"
+       ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
+       ∗ mepc ↦ term_var "mepc"
+       ∗ ∃ "mip", mip ↦ term_var "mip"
+       ∗ ∃ "mie", mie ↦ term_var "mie"
+       ∗ mcause ↦ term_var "mcause"
+       ∗ pmp0cfg ↦ term_var "cfg0"
+       ∗ pmp1cfg ↦ term_var "cfg1"
+       ∗ pmpaddr0 ↦ term_var "addr0"
+       ∗ pmpaddr1 ↦ term_var "addr1";
+  |}.
+\end{minted}
+% \begin{lstlisting}[caption=original readCSR contract, label=lst:readCSR]
+% Definition sep_contract_readCSR : SepContractFun readCSR :=
+%   {| sep_contract_logic_variables := [csr :: ty_csridx; "mpp" :: ty_privilege;
+%                                       "mtvec" :: ty_xlenbits; "mcause" :: ty_mcause;
+%                                       "mepc" :: ty_xlenbits; "cfg0" :: ty_pmpcfg_ent; "cfg1" :: ty_pmpcfg_ent; "addr0" :: ty_xlenbits; "addr1" :: ty_xlenbits];
+%      sep_contract_localstore      := [term_var csr];
+%      sep_contract_precondition    :=
+%       ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [nenv term_var "mpp"; term_var "mpie"; term_var "mie" ]
+%        ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [nenv term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+%        ∗ mtvec ↦ term_var "mtvec"
+%        ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
+%        ∗ mepc ↦ term_var "mepc"
+%        ∗ ∃ "mip", mip ↦ term_var "mip"
+%        ∗ ∃ "mie", mie ↦ term_var "mie"
+%        ∗ mcause ↦ term_var "mcause"
+%        ∗ pmp0cfg ↦ term_var "cfg0"
+%        ∗ pmp1cfg ↦ term_var "cfg1"
+%        ∗ pmpaddr0 ↦ term_var "addr0"
+%        ∗ pmpaddr1 ↦ term_var "addr1";
+%      sep_contract_result          := "result_readCSR";
+%      sep_contract_postcondition   :=
+%        ∃ "result", term_var "result_readCSR" = term_var "result"
+%        ∗ ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [term_var "mpp"; term_var "mpie"; term_var "mie" ]
+%        ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+%        ∗ mtvec ↦ term_var "mtvec"
+%        ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
+%        ∗ mepc ↦ term_var "mepc"
+%        ∗ ∃ "mip", mip ↦ term_var "mip"
+%        ∗ ∃ "mie", mie ↦ term_var "mie"
+%        ∗ mcause ↦ term_var "mcause"
+%        ∗ pmp0cfg ↦ term_var "cfg0"
+%        ∗ pmp1cfg ↦ term_var "cfg1"
+%        ∗ pmpaddr0 ↦ term_var "addr0"
+%        ∗ pmpaddr1 ↦ term_var "addr1";
+%   |}.
+% \end{lstlisting}

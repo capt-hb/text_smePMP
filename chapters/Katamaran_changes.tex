@@ -1,3 +1,6 @@
+% TODO don't use a pmp function to have a closer translation
+
+% FIXME what is needed as input (µSail, contracts, UC)
 \chapter{Katamaran}
 Katamaran is a framework for verifying \textmu{}Sail programs using \glspl{uc}.  
 A \gls{uc} specifies the expected behaviour of a program in terms of preconditions and postconditions, and Katamaran proves that the given \textmu{}Sail implementation satisfies these contracts.
@@ -11,7 +14,7 @@ This is particularly useful for architectural mechanisms such as memory protecti
 Katamaran includes a case study for the RISC-V \gls{pmp} extension.
 The case study formalizes the \gls{pmp} behaviour in \textmu{}Sail and proves a \gls{uc} expressing the memory-isolation and access-control properties expected from \gls{pmp}.
 
-The \textmu{}Sail model is derived from the official RISC-V Sail implementation~\cite{risc-v_sail} as you can see in the \texttt{pmpCheckRWX}-function in \cref{lst:sail_code, lst:microsail_code}. %TODO insert these listings and look for a good example function ¿ pmpCheckRWX ?
+The \textmu{}Sail model is derived from the official RISC-V Sail implementation~\cite{risc-v_sail} as you can see in the \texttt{pmpCheckRWX}-function in~\cref{lst:sail_code, lst:microsail_code}. %TODO insert these listings and look for a good example function ¿ pmpCheckRWX ?
 As a result, this model stays close to the real-world specification.
 
 The existing model is however intentionally limited to serve as a proof of concept.
@@ -21,7 +24,7 @@ It also only supports the \gls{tor} addressing mode.
 The \textmu{}Sail model, just like the official RISC-V Sail model implements \gls{pmp} using a \texttt{pmpCheck} function.
 This function is complex enough that it itself calls multiple functions.
 
-To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function as seen in \cref{lst:microsail_contract}.
+To then implement the \gls{uc} every function needs a definition of what it is supposed to do, which is done by defining contracts for every function as seen in~\cref{lst:microsail_contract}.
 These contracts have a precondition which needs to be true for every invocation of the function and a postcondition which also needs to be true after the invocation of the corresponding function.
 In the given example the precondition is \top which means this condition is always fulfilled, but the postcondition is a bit more complex.
 The postcondition starts of with converting the `L', `A', `X', `W', `R' which are part of the pmpcfg-register into a usable form for this function.
@@ -29,9 +32,8 @@ Then it is checked whether the access succeded according to the \textmu{}Sail co
 
 When all the function's contracts are proven true, the prover can use these contracts to prove the \gls{uc}.
 
-% TODO also include the contract and verification for the chosen example function
-
-\begin{lstlisting}[caption=Sail code example, label=lst:sail_code]
+% TODO simplify to more closely represent µSail code
+\begin{lstlisting}[caption=Sail code example, label=lst:sail_code, basicstyle=\tiny]
 private function pmpCheckRWX(ent : Pmpcfg_ent, access : MemoryAccessType(mem_payload)) -> bool =
   match access {
     Load(Data)                    => ent[R] == 0b1,
@@ -83,6 +85,7 @@ match: ent in rpmpcfg_ent with
 end.
 \end{lstlisting}
 
+%TODO simplify contract
 \begin{lstlisting}[caption=The contract for the \textmu{}Sail code, label=lst:microsail_contract]
 Definition sep_contract_pmpCheckRWX : SepContractFun pmpCheckRWX :=
   let Σ : LCtx := [acc :: ty_access_type; L :: ty.bool; A :: ty_pmpaddrmatchtype; X :: ty.bool; W :: ty.bool; R :: ty.bool] in

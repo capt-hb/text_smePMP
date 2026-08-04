@@ -23,10 +23,7 @@ Supporting \gls{smepmp} therefore requires extending the model with the \texttt{
 
 Support for this \gls{csr} is added by adding the \texttt{mseccfg} register to the list of existing \glspl{csr}.
 The register layout and associated field definitions were then added to the model, allowing the individual fields to be accessed symbolically by name.
-Finally, the proof's helper functions are updated to accommodate the new register and its fields.
-
-% FIXME move amount changed to evaluation
-% Adding support for the \texttt{mseccfg} register requires modifications across five files and introduce approximatly 75 lines of changes.
+Finally, the proof's helper functions and the contracts requiring access to the \glspl{csr} are updated to accommodate the new register and its fields.
 
 \section{Changes to PMP Semantics}
 The fields in the \texttt{mseccfg} register extend the behaviour of the existing \gls{pmp} mechanism.
@@ -93,6 +90,7 @@ Since readCSR now needs to access the newly introduced mseccfg register, its con
 This ensures that the contract accurately reflects the function's interaction with the machine state while preserving the guarantee that reading a CSR does not modify the contents of mseccfg.
 
 % FIXME? add fontsize=\small (or \tiny) in []?
+% TODO special chars do not compile
 \begin{minted}[linenos, breaklines, frame=single, caption={Changes in readCSR contract}, label={lst:readCSR}]{diff}
 Definition sep_contract_readCSR : SepContractFun readCSR :=
   {| sep_contract_logic_variables := [csr :: ty_csridx; "mpp" :: ty_privilege;
@@ -100,33 +98,33 @@ Definition sep_contract_readCSR : SepContractFun readCSR :=
                                       "mepc" :: ty_xlenbits; "cfg0" :: ty_pmpcfg_ent; "cfg1" :: ty_pmpcfg_ent; "addr0" :: ty_xlenbits; "addr1" :: ty_xlenbits];
      sep_contract_localstore      := [term_var csr];
      sep_contract_precondition    :=
-      ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [nenv term_var "mpp"; term_var "mpie"; term_var "mie" ]
-+      ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [nenv term_var "mml"; term_var "mmwp"; term_var "rlb" ]
-       ∗ mtvec ↦ term_var "mtvec"
-       ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
-       ∗ mepc ↦ term_var "mepc"
-       ∗ ∃ "mip", mip ↦ term_var "mip"
-       ∗ ∃ "mie", mie ↦ term_var "mie"
-       ∗ mcause ↦ term_var "mcause"
-       ∗ pmp0cfg ↦ term_var "cfg0"
-       ∗ pmp1cfg ↦ term_var "cfg1"
-       ∗ pmpaddr0 ↦ term_var "addr0"
-       ∗ pmpaddr1 ↦ term_var "addr1";
+      exists "mpie", exists "mie", mstatus -> term_record rmstatus [nenv term_var "mpp"; term_var "mpie"; term_var "mie" ]
++      * exists "mml", exists "mmwp", exists "rlb", mseccfg -> term_record rmseccfg [nenv term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+       * mtvec -> term_var "mtvec"
+       * (exists "mscratch", mscratch -> term_var "mscratch")
+       * mepc -> term_var "mepc"
+       * exists "mip", mip -> term_var "mip"
+       * exists "mie", mie -> term_var "mie"
+       * mcause -> term_var "mcause"
+       * pmp0cfg -> term_var "cfg0"
+       * pmp1cfg -> term_var "cfg1"
+       * pmpaddr0 -> term_var "addr0"
+       * pmpaddr1 -> term_var "addr1";
      sep_contract_result          := "result_readCSR";
      sep_contract_postcondition   :=
-       ∃ "result", term_var "result_readCSR" = term_var "result"
-       ∗ ∃ "mpie", ∃ "mie", mstatus ↦ term_record rmstatus [term_var "mpp"; term_var "mpie"; term_var "mie" ]
-+      ∗ ∃ "mml", ∃ "mmwp", ∃ "rlb", mseccfg ↦ term_record rmseccfg [term_var "mml"; term_var "mmwp"; term_var "rlb" ]
-       ∗ mtvec ↦ term_var "mtvec"
-       ∗ (∃ "mscratch", mscratch ↦ term_var "mscratch")
-       ∗ mepc ↦ term_var "mepc"
-       ∗ ∃ "mip", mip ↦ term_var "mip"
-       ∗ ∃ "mie", mie ↦ term_var "mie"
-       ∗ mcause ↦ term_var "mcause"
-       ∗ pmp0cfg ↦ term_var "cfg0"
-       ∗ pmp1cfg ↦ term_var "cfg1"
-       ∗ pmpaddr0 ↦ term_var "addr0"
-       ∗ pmpaddr1 ↦ term_var "addr1";
+       exists "result", term_var "result_readCSR" = term_var "result"
+       * exists "mpie", ∃ "mie", mstatus -> term_record rmstatus [term_var "mpp"; term_var "mpie"; term_var "mie" ]
++      * exists "mml", ∃ "mmwp", ∃ "rlb", mseccfg -> term_record rmseccfg [term_var "mml"; term_var "mmwp"; term_var "rlb" ]
+       * mtvec -> term_var "mtvec"
+       * (exists "mscratch", mscratch -> term_var "mscratch")
+       * mepc -> term_var "mepc"
+       * exists "mip", mip -> term_var "mip"
+       * exists "mie", mie -> term_var "mie"
+       * mcause -> term_var "mcause"
+       * pmp0cfg -> term_var "cfg0"
+       * pmp1cfg -> term_var "cfg1"
+       * pmpaddr0 -> term_var "addr0"
+       * pmpaddr1 -> term_var "addr1";
   |}.
 \end{minted}
 % \begin{lstlisting}[caption=original readCSR contract, label=lst:readCSR]

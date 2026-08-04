@@ -1,12 +1,81 @@
 \glsresetall
 
 \chapter{Evaluation}
-\section{\texttt{mseccfg} Control Status Register}
+This chapter evaluates the effort required to extend the Katamaran \gls{pmp} case study with support for \gls{smepmp}.
+The evaluation is based on a comparison between the original case study and the extended implementation, allowing the scope of the required modifications to be quantified.
 
-\section{smePMP semantics}
+The changes are presented per \gls{smepmp} feature, following the structure introduced in the previous chapter.
+Finally, the chapter discusses the experience of extending the Katamaran framework, including observations on its usability and the challenges encountered during development.
+
+\section{Modification Effort}
+To extend the existing Katamaran \gls{pmp} case study with support for \gls{smepmp}, five source files required modification.
+In total, 112 lines of code were added, 14 lines were removed, and one existing line was modified.
+\Cref{table:results} provides a breakdown of these changes by feature.
+
+The table only includes modifications made to the implementation and the \texttt{mseccfg} register contracts.
+The contracts corresponding to the semantic changes introduced by \gls{mmwp}, \gls{mml} and \gls{rlb} were not updated as part of this work and are thus not included in the reported figures.
+
+\begin{table}[]
+\centering
+\begin{tabular}{c|ccc}
+                            & Added & Removed & Changed \\
+\hline
+\texttt{mseccfg}            & 28    & 0       & 0       \\
+\texttt{mseccfg} contracts  & 47    & 0       & 1       \\
+\gls{mmwp}                  & 13    & 13      & 0       \\
+\gls{mml}                   & 58    & 0       & 0       \\
+\gls{rlb}                   & 14    & 1       & 0
+\end{tabular}
+\caption{Updates to Katamaran}
+\label{table:results}
+\end{table}
+
+As shown in \cref{table:results}, the required effort differs considerably between the individual \gls{smepmp} features.
+While support for \gls{rlb} required only a small number of changes, \gls{mml} required substantially more modifications because it fundamentally changes the interpretation of existing \gls{pmp} permissions.
+The following sections discuss the changes required for each feature in more detail.
+
+\subsection{\texttt{mseccfg} Control Status Register}
+As shown in \cref{table:results}, adding support for the mseccfg \gls{csr} required 28 lines of implementation code.
+Most of these additions consist of defining the new register, its layout, and the associated field definitions used throughout the model.
+
+The corresponding contract updates are more extensive, requiring 47 additional lines.
+This is because multiple functions interact with the \glspl{csr}, and their contracts must be updated to include the mseccfg register in the formal specification.
+Although the implementation changes are localized, the new architectural state must be reflected consistently in every affected contract.
+
 \subsection{Machine-Mode Whitelist Policy}
-\subsection{Machine-Mode Lockdown}
-\subsection{Rule Locking Bypass}
+As shown in \cref{table:results}, adding support for \gls{mmwp} required 13 additions and 13 removals.
+The identical number of additions and removals is coincidental and results from replacing existing privilege-level checks with updated checks that also account for the state of \gls{mmwp}.
 
-% you can add 'feedback' voor gebruik van Katamaran
+Before the introduction of \gls{mmwp}, the model allowed Machine-mode accesses when no \gls{pmp} region matched, while accesses from lower privilege modes were denied.
+Supporting \gls{mmwp} required modifying these checks such that unmatched accesses from Machine-mode are only allowed when \gls{mmwp} is disabled.
+Although the number of changed lines is relatively small, the modification affects a central part of the access-control logic because it changes the default behavior for Machine-mode memory accesses.
+
+\subsection{Machine-Mode Lockdown}
+As shown in \cref{table:results}, adding support for \gls{mml} required 58 additions, making it the largest individual change among the \gls{smepmp} features.
+This is because \gls{mml} fundamentally changes the interpretation of existing \gls{pmp} entries rather than only adding an additional condition to the access checks.
+
+Before the introduction of \gls{mml}, the model determined access permissions based on the privilege mode and the R-, W-, and X-bits from the corresponding \texttt{pmpcfg} register.
+With \gls{mml} enabled, the interpretation of the L-bit changes and additional cases must be handled to support Machine-mode-only, User- and Supervisor-mode-only, and shared memory regions.
+As a result, the permission evaluation logic requires additional checks before the existing R-, W-, and X-bit based permission checks can be applied.
+
+\subsection{Rule Locking Bypass}
+As shown in \cref{table:results}, supporting \gls{rlb} required 14 additions and 1 removal.
+Compared to the other \gls{smepmp} features, this is a relatively small change because \gls{rlb} only affects how the model determines whether a \gls{pmp} entry is considered locked.
+Furthermore, the original RISC-V model and thus the Katamaran model already encapsulate this check in a dedicated helper function.
+As a result, supporting \gls{rlb} only required modifying this function, without affecting the remainder of the permission evaluation logic.
+
+Prior to the introduction of \gls{rlb}, whether a \gls{pmp} entry was locked was determined solely by the L-bit in the corresponding \texttt{pmpcfg} register.
+To support \gls{rlb}, this check was extended such that locked entries are treated as unlocked when the \gls{rlb} bit is enabled.
+
+% TODO add more observations? (don't know what)
 \section{Discussion on Katamaran use}
+Extending the Katamaran \gls{pmp} case study with support for \gls{smepmp} provided several insights into the development experience of working with the framework.
+
+Before modifying the existing case study, time was spent learning the basics of Rocq, the proof assistant on which Katamaran is built.
+This provided a useful introduction to the proof language and tactics used throughout the framework.
+However, familiarity with Rocq alone was not sufficient to understand the Katamaran case study, as most of the implementation is written in \textmu{}Sail.
+Consequently, understanding the structure and semantics of \textmu{}Sail proved to be equally important.
+
+Since the \textmu{}Sail model is derived from the official RISC-V Sail model, consulting the original Sail implementation was often helpful when interpreting the existing code.
+In many cases, the correspondence between the two models was straightforward.
+However, some parts of the \textmu{}Sail implementation differed sufficiently from the original Sail code that identifying the corresponding functionality required additional investigation, increasing the time needed to understand and modify the implementation.

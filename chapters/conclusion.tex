@@ -1,0 +1,31 @@
+\glsresetall
+
+\chapter{Conclusion}
+% %v1
+% This thesis extended the Katamaran RISC-V \gls{pmp} case study with support for the \gls{smepmp} extension.
+% This required introducing the \texttt{mseccfg} control and status register, updating the \gls{pmp} access-checking semantics to implement the \gls{mmwp}, \gls{mml}, and \gls{rlb} features, and extending the existing contracts to support the newly introduced architectural state.
+
+% The evaluation shows that supporting \gls{smepmp} requires relatively modest modifications to the existing Katamaran model.
+% Although \gls{mml} introduces more substantial changes due to its effect on the interpretation of existing \gls{pmp} entries, the overall implementation effort remained limited.
+% This suggests that the existing Katamaran \gls{pmp} case study provides a solid foundation for extending the model with additional architectural features.
+
+% % future work
+% While the implementation of the \gls{smepmp} semantics was completed, the corresponding contract updates for the semantic changes introduced by \gls{mmwp}, \gls{mml}, and \gls{rlb} remain future work.
+% Completing these contracts would allow the extended access-control semantics to be formally verified and would complete the integration of \gls{smepmp} into the Katamaran verification framework.
+
+
+%v2
+This thesis presented an extension of the Katamaran RISC-V \gls{pmp} case study with support for the \gls{smepmp} extension.
+To achieve this, the existing model was extended with the \texttt{mseccfg} \gls{csr}, the \gls{pmp} semantics were updated to incorporate the \gls{mmwp}, \gls{mml}, and \gls{rlb} features, and the corresponding \gls{csr} contracts were adapted to reflect the additional architectural state.
+
+The evaluation showed that incorporating \gls{smepmp} into the existing Katamaran model requires relatively modest modifications.
+While the introduction of \gls{mml} necessitates more extensive changes due to its impact on the interpretation of existing \gls{pmp} permissions, the remaining features could be integrated through localized changes to the existing model.
+Overall, the results indicate that supporting \gls{smepmp} can be achieved through relatively limited changes to the existing Katamaran \gls{pmp} case study.
+
+Extending the model also provided practical insights into working with Katamaran.
+In particular, understanding the \textmu{}Sail implementation and relating it to the original Sail model proved to be an important part of the development process.
+Once the existing model had been understood, however, its modular structure allowed the individual \gls{smepmp} features to be implemented in a localized manner.
+
+%future work
+The remaining work consists of updating the function contracts corresponding to the semantic changes introduced by \gls{mmwp}, \gls{mml}, and \gls{rlb}.
+Completing these contracts would allow the newly introduced semantics to be formally verified, completing the integration of \gls{smepmp} into the Katamaran \gls{pmp} case study.

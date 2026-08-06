@@ -5,7 +5,7 @@ This chapter evaluates the effort required to extend the Katamaran \gls{pmp} cas
 The evaluation is based on a comparison between the original case study and the extended implementation, allowing the scope of the required modifications to be quantified.
 
 The changes are presented per \gls{smepmp} feature, following the structure introduced in the previous chapter.
-Finally, the chapter discusses the experience of extending the Katamaran framework, including observations on its usability and the challenges encountered during development.
+Finally, the chapter discusses the experience of extending the Katamaran framework, including observations on its usability and the challenges encountered during development. \sand{You didn't extend Katamaran, only a case study. Think of it like this: Katamaran is the language, you extended a program written in that language}
 
 \section{Modification Effort}
 To extend the existing Katamaran \gls{pmp} case study with support for \gls{smepmp}, five source files required modification.
@@ -79,3 +79,5 @@ Consequently, understanding the structure and semantics of \textmu{}Sail proved 
 Since the \textmu{}Sail model is derived from the official RISC-V Sail model, consulting the original Sail implementation was often helpful when interpreting the existing code.
 In many cases, the correspondence between the two models was straightforward.
 However, some parts of the \textmu{}Sail implementation differed sufficiently from the original Sail code that identifying the corresponding functionality required additional investigation, increasing the time needed to understand and modify the implementation.
+
+\sand{You could opt to mention other shortcomings you experienced: lack of manual/resource for learning Katamaran, maybe you found the error messages you encountered during your thesis to be too vague/unhelpful, ...}

@@ -1,7 +1,7 @@
 \glsresetall
 
 \chapter{Enhanced Physical Memory Protection}
-\Gls{pmp} is relatively permissive and assumes that Machine-mode software is fully trusted.
+\Gls{pmp} is relatively permissive and assumes that Machine-mode software is fully trusted. \sand{1-sentence summary of PMP might be a softer start of this chapter, maybe also add a back-reference to the background}
 However, additional restrictions on Machine-mode memory accesses are desirable to protect against potentially buggy or vulnerable Machine-mode code.
 To address this, the RISC-V specification introduces \gls{smepmp}.
 
@@ -16,14 +16,14 @@ Finally, we discuss the corresponding changes to the function contracts.
 
 \section{\texttt{mseccfg} Control Status Register}
 To configure these additional security mechanisms, \gls{smepmp} introduces several control bits in the \texttt{mseccfg} \gls{csr}.
-The relevant fields are \gls{mmwp}, \gls{mml}, and \gls{rlb}.
+The relevant fields are \gls{mmwp}, \gls{mml}, and \gls{rlb}. \sand{abrupt stop, maybe finish the sentence with "which we will explain in more detail below"}
 
 The existing Katamaran \gls{pmp} model does not include the \texttt{mseccfg} register, since the currently implemented features do not require it.
 Supporting \gls{smepmp} therefore requires extending the model with the \texttt{mseccfg} register together with definitions for accessing its individual fields by name.
 
 Support for this \gls{csr} is added by adding the \texttt{mseccfg} register to the list of existing \glspl{csr}.
 The register layout and associated field definitions were then added to the model, allowing the individual fields to be accessed symbolically by name.
-Finally, the proof's helper functions and the contracts requiring access to the \glspl{csr} are updated to accommodate the new register and its fields.
+Finally, the proof's helper functions and the contracts requiring access to the \glspl{csr} are updated to accommodate the new register and its fields. \sand{1) What do you mean with "proof's helper functions"? 2) Why not show a snippet of the required modification? (You could even opt to show both a contract modification and a helper function modification if interesting)}
 
 \section{Changes to PMP Semantics}
 The fields in the \texttt{mseccfg} register extend the behaviour of the existing \gls{pmp} mechanism.
@@ -52,7 +52,8 @@ This bit, just like \gls{mmwp} is a sticky bit to prevent circumvention by disab
 This does however not allow for shared memory between Machine-mode and User- and Supervisor-mode.
 To solve this the previously reserved combinations with the read-bit being `0' and the write bit `1' are used to be shared memory.
 The combination of both the lock-, read-, write- and execute- bit being `1' also becomes shared memory.
-The permissions of these combinations also do not reflect the read-, write- and execute- bits but follow the permissions in~\cref{fig:smepmp_visual}.
+The permissions of these combinations also do not reflect the read-, write- and execute- bits but follow the permissions in~\cref{fig:smepmp_visual}. \sand{Maybe describe one situation as an example, instead of just saying "read the diagram"}
+\sand{Make the caption of the figure a bit more descriptive, it currently doesn't add much}
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{pics/smepmp-visual-representation.png}
@@ -81,16 +82,17 @@ To determine if an entry is locked, the original Katamaran model just needs to c
 To add the \gls{rlb} bit's functionality the existing model's logic determining whether a \gls{pmp} entry should be treated as locked is updated.
 
 \section{Changes in the Contracts}
-All of these changes modify the behaviour of the underlying functions, causing the existing function contracts to no longer accurately describe their semantics.
+All of these changes modify the behaviour of the underlying functions, causing the existing function contracts to no longer accurately describe their semantics. \sand{Do they need to be accurate? If they cannot be verified anymore, mention it as so, it will make this section more impactful}
 The contracts must therefore be updated to reflect the behaviour introduced by \gls{smepmp}.
 Consequently, the changes made to the contracts closely mirror those made to the ISA model, ensuring that the formal specification remains consistent with the implementation.
 
-As an example, \cref{lst:readCSR} shows the changes made to the contract of the readCSR function.
+As an example, \cref{lst:readCSR} shows the changes made to the contract of the readCSR function. \sand{I would expect this example higher in this chapter (see comment above mentioning this)}
 Since readCSR now needs to access the newly introduced mseccfg register, its contract must also include this register in both the precondition and postcondition.
 This ensures that the contract accurately reflects the function's interaction with the machine state while preserving the guarantee that reading a CSR does not modify the contents of mseccfg.
 
 % FIXME? add fontsize=\small (or \tiny) in []?
 % TODO special chars do not compile
+\sand{You are allowed to simplify and even "zoom in" on the interesting parts. Also feel free to use notation that is convenient and easier to parse/understand for a reader.}
 \begin{minted}[linenos, breaklines, frame=single, caption={Changes in readCSR contract}, label={lst:readCSR}]{diff}
 Definition sep_contract_readCSR : SepContractFun readCSR :=
   {| sep_contract_logic_variables := [csr :: ty_csridx; "mpp" :: ty_privilege;
@@ -163,3 +165,5 @@ Definition sep_contract_readCSR : SepContractFun readCSR :=
 %        ∗ pmpaddr1 ↦ term_var "addr1";
 %   |}.
 % \end{lstlisting}
+
+\sand{I'd expect an example that has something to do with the PMP check logic, which you have been describing in detail up to this point. Show a function that got updated that influences the PMP check logic, show its corresponding contract.}

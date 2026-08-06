@@ -2,9 +2,11 @@
 \setup{
   title={Reasoning about smePMP},
   author={Yari Vanherpe},
+  % TODO add titles
   promotor={Prof.\ Dominique Devriese \and Steven Keuchel},
   assessor={Benedikt Gierlichs \and M\'arton Bogn\'ar },
-  assistant={Sander Huyghebaert}}
+  assistant={Sander Huyghebaert}
+}
 % Remove the "%" on the next line for generating the cover page
 %\setup{coverpageonly}
 % Remove the "%" before the next "\setup" to generate only the first pages
@@ -31,10 +33,12 @@
 \usepackage[table]{xcolor} 
 \usepackage{pdflscape}
 \usepackage{listings}
+\usepackage{minted}
 
 %\usepackage[disable]{todonotes}
 \usepackage{todonotes} % Put the 'disable' attr to hide all todonotes (see line above)
 \newcommand{\sand}[1]{\todo[color=blue!40,author=Sander,inline]{#1}}
+
 %%%%%%%
 % The lipsum package is used to generate random text.
 % You never need this in a real master's thesis text!
@@ -49,15 +53,28 @@
 \begin{document}
 
 \begin{preface}
-%TODO
+I would like to thank my thesis assistants and the new friends I met during the programme for their support throughout this work.
+
+I chose this topic because I am interested in instruction set architectures and wanted to learn more about formal verification. This thesis gave me the opportunity to explore both interests together.
+
+Formal verification turned out to be much harder and more abstract than I expected. But working through the challenges and seeing the extensions come together made the effort worthwhile.
 \end{preface}
 
 \tableofcontents*
 
 \begin{abstract}
-  %TODO
-  This \texttt{abstract} environment provides a summary of the work, which may or may not be extensive.
-The intention is that this should be limited to 1 page.
+\Gls{pmp} is a RISC-V extension that enforces access-control on memory regions.
+However, \gls{pmp} assumes Machine-mode software is fully trusted, which is why \gls{smepmp} was developed as an extension to \gls{pmp}.
+This extension allows for memory access to be constrained even for privileged software.
+As these mechanisms are security-critical, formal verification provides stronger assurance of their correctness than testing alone.
+
+This thesis extends the Katamaran RISC-V \gls{pmp} case study with support for \gls{smepmp}.
+Katamaran is a framework for formally verifying \textmu{}Sail ISA models, enabling mathematical proofs that an implementation satisfies its specified security properties.
+Supporting \gls{smepmp} required extending the existing model with the \texttt{mseccfg} \gls{csr}, updating the \gls{pmp} semantics and adapting the existing contracts to reflect these changes.
+
+The implementation effort was evaluated by comparing the original Katamaran \gls{pmp} case study with the extended model.
+The results shows that supporting \gls{smepmp} requires relatively limited modifications to the existing implementation.
+While the function contracts corresponding to the semantic changes remain future work, the implementation demonstrates that the existing Katamaran \gls{pmp} case study can be successfully extended to support the architectural features introduced by the RISC-V \gls{smepmp} extension.
 \end{abstract}
 
 % A list of figures and tables is optional
@@ -105,6 +122,8 @@ The intention is that this should be limited to 1 page.
 \include{chapters/background}
 \include{chapters/Katamaran_changes}
 \include{chapters/smePMP}
+\include{chapters/evaluation}
+\include{chapters/conclusion}
 % \include{chapter-1}
 % \include{chapter-2}
 % % ... and so on until
